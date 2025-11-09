@@ -1,4 +1,4 @@
-# ====================== ALIEN X INSTAGRAM RESET BOT - COMMAND ONLY VERSION ======================
+# ====================== ALIEN X INSTAGRAM RESET BOT - PYTHON 3.13 COMPATIBLE ======================
 
 import requests
 import asyncio
@@ -6,6 +6,7 @@ import time
 import threading
 from datetime import datetime
 import os
+import sys
 
 from telegram import Update
 from telegram.ext import (
@@ -557,18 +558,25 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("❌ Operation cancelled.")
     return ConversationHandler.END
 
-# ================== MAIN ==================
-def main():
+# ================== MAIN - PYTHON 3.13 COMPATIBLE ==================
+async def async_main():
+    """Async main function"""
     print("🚀 ALIEN X INSTAGRAM RESET BOT STARTING...")
     print(f"📊 Flask Dashboard: http://localhost:{FLASK_PORT}")
     print(f"👑 Owner IDs: {OWNER_IDS}")
+    print(f"🐍 Python Version: {sys.version}")
     
     # Start Flask in background
     flask_thread = threading.Thread(target=run_flask, daemon=True)
     flask_thread.start()
     print("✅ Flask server started\n")
     
-    app = Application.builder().token(BOT_TOKEN).build()
+    # Build application WITHOUT creating event loop issues
+    app = (
+        Application.builder()
+        .token(BOT_TOKEN)
+        .build()
+    )
 
     # User commands
     app.add_handler(CommandHandler("start", start))
@@ -618,7 +626,32 @@ def main():
     print("   /broadcast - Send message to all users")
     print("="*50)
     
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+    # Initialize and run polling
+    await app.initialize()
+    await app.start()
+    await app.updater.start_polling(allowed_updates=Update.ALL_TYPES)
+    
+    # Keep running
+    try:
+        while True:
+            await asyncio.sleep(1)
+    except (KeyboardInterrupt, SystemExit):
+        print("\n🛑 Shutting down bot...")
+        await app.updater.stop()
+        await app.stop()
+        await app.shutdown()
+
+def main():
+    """Main entry point - Python 3.13 compatible"""
+    try:
+        # Run the async main function
+        asyncio.run(async_main())
+    except KeyboardInterrupt:
+        print("\n✅ Bot stopped gracefully")
+    except Exception as e:
+        print(f"❌ Fatal error: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     main()
