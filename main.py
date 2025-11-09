@@ -1,19 +1,16 @@
-# ====================== ALIEN X INSTAGRAM RESET BOT WITH OWNER COMMANDS ======================
+# ====================== ALIEN X INSTAGRAM RESET BOT - COMMAND ONLY VERSION ======================
 
 import requests
 import asyncio
-import nest_asyncio
 import time
 import threading
 from datetime import datetime
 import os
 
-nest_asyncio.apply()
-
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update
 from telegram.ext import (
     Application, CommandHandler, MessageHandler, filters,
-    ContextTypes, CallbackQueryHandler, ConversationHandler
+    ContextTypes, ConversationHandler
 )
 
 # Flask imports
@@ -23,11 +20,10 @@ from flask import Flask, jsonify
 BOT_TOKEN = "8294042992:AAGkSY7zlyKu5PvaIeCPRsSlznN280Uqmzs"
 FLASK_PORT = int(os.environ.get('PORT', 5000))
 
-# Owner IDs - Replace with YOUR Telegram user IDs (get from @userinfobot)
-OWNER_IDS = [5316048641, 5819790024]  # ⚠️ REPLACE THESE!
+# Owner IDs
+OWNER_IDS = [5316048641, 5819790024]
 
-# ⚙️ FORCE JOIN CHANNELS - Add/Remove channels as needed
-# Format: {"@channel_username": "https://t.me/channel_username"}
+# FORCE JOIN CHANNELS
 FORCE_JOIN_CHANNELS = {
     "@NYROSTOOLSX": "https://t.me/NYROSTOOLSX",
     "@alienbackupx": "https://t.me/alienbackupx",
@@ -35,7 +31,7 @@ FORCE_JOIN_CHANNELS = {
     "@paidfilealien": "https://t.me/paidfilealien"
 }
 
-# ⚙️ ALLOWED EMAIL DOMAINS - Add/Remove domains as needed
+# ALLOWED EMAIL DOMAINS
 ALLOWED_DOMAINS = ["gmail.com", "hotmail.com", "aol.com"]
 
 URL = "https://www.instagram.com/api/v1/web/accounts/account_recovery_send_ajax/"
@@ -47,7 +43,7 @@ HEADERS = {
     "x-requested-with": "XMLHttpRequest",
 }
 
-SINGLE, BULK, BROADCAST = range(3)
+BROADCAST = 0
 
 # ================== STATS TRACKING ==================
 stats = {
@@ -134,84 +130,50 @@ async def is_joined(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
             return False
     return True
 
-# ================== BUTTONS ==================
-def join_buttons():
-    keyboard = []
-    for i, (channel, link) in enumerate(FORCE_JOIN_CHANNELS.items(), 1):
-        keyboard.append([InlineKeyboardButton(f"Channel {i}", url=link)])
-    keyboard.append([InlineKeyboardButton("I Joined All", callback_data="joined")])
-    return InlineKeyboardMarkup(keyboard)
-
-def mode_buttons():
-    keyboard = [
-        [InlineKeyboardButton("Single Reset", callback_data="single")],
-        [InlineKeyboardButton("Bulk Reset (Max 10)", callback_data="bulk")]
-    ]
-    return InlineKeyboardMarkup(keyboard)
-
-EPIC_START_MSG = (
-    "✨**𝗪𝗘𝗟𝗖𝗢𝗠𝗘 𝗧𝗢 𝗔𝗟𝗜𝗘𝗡 𝗫 𝗣𝗔𝗦𝗦 𝗥𝗘𝗦𝗘𝗧 𝗧𝗢𝗢𝗟**⚡️\n\n"
-    "🔥**𝗝𝗢𝗜𝗡 𝗔𝗟𝗟 𝗧𝗛𝗘 𝗖𝗛𝗔𝗡𝗡𝗘𝗟𝗦 𝗔𝗡𝗗 𝗨𝗦𝗘 𝗧𝗛𝗘 𝗕𝗢𝗧**📱\n\n"
-    "𝗝𝗨𝗦𝗧 𝗦𝗘𝗡𝗗 𝗠𝗔𝗜𝗟 ⛔\n\n"
-    "𝗗𝗘𝗩𝗘𝗟𝗢𝗣𝗘𝗥 - 𝗔𝗟𝗜𝗘𝗡 𝗫👀\n"
-    "𝗢𝗪𝗡𝗘𝗥 - @𝗔𝗟𝗜𝗘𝗡𝗦𝗘𝗫𝗬👾"
-)
-
 # ================== /start ==================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     stats["active_users"].add(user_id)
     stats["total_users"].add(user_id)
     
-    if await is_joined(update, context):
-        await update.message.reply_text(
-            EPIC_START_MSG, 
-            parse_mode='Markdown', 
-            reply_markup=mode_buttons()
-        )
-    else:
-        await update.message.reply_text(
-            "🔒 **𝗙𝗢𝗥𝗖𝗘 𝗝𝗢𝗜𝗡 𝗥𝗘𝗤𝗨𝗜𝗥𝗘𝗗**🔒\n\n"
-            f"Join all **{len(FORCE_JOIN_CHANNELS)} channels** → Click **'𝗜 𝗝𝗢𝗜𝗡𝗘𝗗 𝗔𝗟𝗟'**",
-            reply_markup=join_buttons(), 
-            parse_mode='Markdown'
-        )
-    return ConversationHandler.END
+    start_msg = (
+        "✨**𝗪𝗘𝗟𝗖𝗢𝗠𝗘 𝗧𝗢 𝗔𝗟𝗜𝗘𝗡 𝗫 𝗣𝗔𝗦𝗦 𝗥𝗘𝗦𝗘𝗧 𝗧𝗢𝗢𝗟**⚡️\n\n"
+        "🔥**𝗝𝗢𝗜𝗡 𝗔𝗟𝗟 𝗧𝗛𝗘 𝗖𝗛𝗔𝗡𝗡𝗘𝗟𝗦 𝗔𝗡𝗗 𝗨𝗦𝗘 𝗧𝗛𝗘 𝗕𝗢𝗧**📱\n\n"
+        "**🎯 AVAILABLE COMMANDS:**\n\n"
+        "📩 `/reset <email>` - Single reset\n"
+        "📬 `/bulk` - Bulk reset (1-10 emails)\n"
+        "📖 `/help` - Show commands\n\n"
+        "**📢 Required Channels:**\n"
+    )
+    
+    for i, (channel, link) in enumerate(FORCE_JOIN_CHANNELS.items(), 1):
+        start_msg += f"{i}. {channel}\n"
+    
+    start_msg += (
+        "\n💎 **𝗗𝗘𝗩𝗘𝗟𝗢𝗣𝗘𝗥** - 𝗔𝗟𝗜𝗘𝗡 𝗫👀\n"
+        "👾 **𝗢𝗪𝗡𝗘𝗥** - @𝗔𝗟𝗜𝗘𝗡𝗦𝗘𝗫𝗬"
+    )
+    
+    await update.message.reply_text(start_msg, parse_mode='Markdown')
 
-# ================== BUTTON HANDLER ==================
-async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-
-    if query.data == "joined":
-        if await is_joined(update, context):
-            await query.edit_message_text(
-                EPIC_START_MSG, 
-                parse_mode='Markdown', 
-                reply_markup=mode_buttons()
-            )
-        else:
-            await query.answer("❌ **𝗬𝗢𝗨 𝗛𝗔𝗩𝗘𝗡'𝗧 𝗝𝗢𝗜𝗡𝗘𝗗 𝗔𝗟𝗟!**", show_alert=True)
-
-    elif query.data == "single":
-        await query.edit_message_text(
-            "📩 **𝗦𝗜𝗡𝗚𝗟𝗘 𝗥𝗘𝗦𝗘𝗧 𝗠𝗢𝗗𝗘**📩\n\n"
-            "Send **1 email** from:\n"
-            "• `gmail.com`\n• `hotmail.com`\n• `aol.com`",
-            parse_mode='Markdown'
-        )
-        return SINGLE
-
-    elif query.data == "bulk":
-        await query.edit_message_text(
-            "📬 **𝗕𝗨𝗟𝗞 𝗥𝗘𝗦𝗘𝗧 𝗠𝗢𝗗𝗘**📬\n\n"
-            "Send **1–10 emails** (one per line)\n\n"
-            "Only:\n• `gmail.com`\n• `hotmail.com`\n• `aol.com`",
-            parse_mode='Markdown'
-        )
-        return BULK
-
-    return ConversationHandler.END
+# ================== /help ==================
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    help_msg = (
+        "📖 **𝗛𝗘𝗟𝗣 & 𝗖𝗢𝗠𝗠𝗔𝗡𝗗𝗦**\n\n"
+        "**👤 USER COMMANDS:**\n\n"
+        "📩 `/reset <email>` - Reset single email\n"
+        "   Example: `/reset user@gmail.com`\n\n"
+        "📬 `/bulk` - Start bulk reset mode\n"
+        "   Send 1-10 emails (one per line)\n\n"
+        "📖 `/help` - Show this message\n\n"
+        "**✅ ALLOWED DOMAINS:**\n"
+        "• gmail.com\n"
+        "• hotmail.com\n"
+        "• aol.com\n\n"
+        "💡 **NOTE:** Join all channels to use the bot!"
+    )
+    
+    await update.message.reply_text(help_msg, parse_mode='Markdown')
 
 # ================== SEND RESET ==================
 async def send_reset(email: str) -> tuple[bool, float]:
@@ -232,7 +194,7 @@ async def send_reset(email: str) -> tuple[bool, float]:
             await asyncio.sleep(2)
     return False, round(time.time() - start, 1)
 
-# ================== SINGLE RESULT FORMAT ==================
+# ================== FORMAT RESULTS ==================
 def format_single_result(email: str, success: bool, speed: float, username: str):
     status = "SUCCESS" if success else "FAILED"
     emoji = "✅" if success else "❌"
@@ -249,7 +211,6 @@ def format_single_result(email: str, success: bool, speed: float, username: str)
         f"· · ─ ·✶· ─ · ·· · ─ ·✶· ─ · ·"
     )
 
-# ================== BULK RESULT FORMAT ==================
 def format_bulk_result(results, total_time):
     success_count = sum(1 for r in results if r["status"])
     failed_count = len(results) - success_count
@@ -279,21 +240,96 @@ def format_bulk_result(results, total_time):
 
     return "\n".join(lines)
 
-# ================== PROCESS EMAIL ==================
-async def process_email(update: Update, context: ContextTypes.DEFAULT_TYPE, is_bulk: bool):
-    if not await is_joined(update, context):
-        await update.message.reply_text("🔒 **𝗝𝗢𝗜𝗡 𝗖𝗛𝗔𝗡𝗡𝗘𝗟𝗦!**", reply_markup=join_buttons())
-        return ConversationHandler.END
-
-    text = update.message.text.strip()
-    emails = [e.strip().lower() for e in text.splitlines() if e.strip()] if is_bulk else [text.lower()]
+# ================== /reset COMMAND ==================
+async def reset_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
     username = update.effective_user.username or "Unknown"
+    
+    # Check if user joined channels
+    if not await is_joined(update, context):
+        not_joined_msg = (
+            "🔒 **𝗙𝗢𝗥𝗖𝗘 𝗝𝗢𝗜𝗡 𝗥𝗘𝗤𝗨𝗜𝗥𝗘𝗗**🔒\n\n"
+            f"Join all **{len(FORCE_JOIN_CHANNELS)} channels** first:\n\n"
+        )
+        for i, (channel, link) in enumerate(FORCE_JOIN_CHANNELS.items(), 1):
+            not_joined_msg += f"{i}. {channel}\n   {link}\n\n"
+        
+        await update.message.reply_text(not_joined_msg, parse_mode='Markdown')
+        return
+    
+    # Check if email provided
+    if not context.args:
+        await update.message.reply_text(
+            "❌ **Usage:** `/reset <email>`\n\n"
+            "**Example:** `/reset user@gmail.com`",
+            parse_mode='Markdown'
+        )
+        return
+    
+    email = context.args[0].strip().lower()
+    
+    # Validate domain
+    domain = email.split("@")[-1] if "@" in email else ""
+    if domain not in ALLOWED_DOMAINS:
+        await update.message.reply_text(
+            f"🚫 **𝗜𝗡𝗩𝗔𝗟𝗜𝗗 𝗗𝗢𝗠𝗔𝗜𝗡:** `{domain}`\n\n"
+            f"**Allowed domains:**\n• `gmail.com`\n• `hotmail.com`\n• `aol.com`",
+            parse_mode='Markdown'
+        )
+        return
+    
+    # Process reset
+    msg = await update.message.reply_text("📤 **𝗦𝗘𝗡𝗗𝗜𝗡𝗚 𝗥𝗘𝗤𝗨𝗘𝗦𝗧...**")
+    
+    success, speed = await send_reset(email)
+    add_activity(f"@{username}", email, success)
+    
+    result = format_single_result(email, success, speed, f"@{username}")
+    await msg.edit_text(result, parse_mode='Markdown')
 
-    if is_bulk and not (1 <= len(emails) <= 10):
-        await update.message.reply_text("❌ **𝗜𝗡𝗩𝗔𝗟𝗜𝗗 𝗖𝗢𝗨𝗡𝗧!**\nUse 1–10 emails.", parse_mode='Markdown')
-        return BULK
+# ================== /bulk COMMAND ==================
+async def bulk_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    
+    # Check if user joined channels
+    if not await is_joined(update, context):
+        not_joined_msg = (
+            "🔒 **𝗙𝗢𝗥𝗖𝗘 𝗝𝗢𝗜𝗡 𝗥𝗘𝗤𝗨𝗜𝗥𝗘𝗗**🔒\n\n"
+            f"Join all **{len(FORCE_JOIN_CHANNELS)} channels** first:\n\n"
+        )
+        for i, (channel, link) in enumerate(FORCE_JOIN_CHANNELS.items(), 1):
+            not_joined_msg += f"{i}. {channel}\n   {link}\n\n"
+        
+        await update.message.reply_text(not_joined_msg, parse_mode='Markdown')
+        return ConversationHandler.END
+    
+    await update.message.reply_text(
+        "📬 **𝗕𝗨𝗟𝗞 𝗥𝗘𝗦𝗘𝗧 𝗠𝗢𝗗𝗘**📬\n\n"
+        "Send **1–10 emails** (one per line)\n\n"
+        "**Allowed domains only:**\n"
+        "• `gmail.com`\n"
+        "• `hotmail.com`\n"
+        "• `aol.com`\n\n"
+        "Use /cancel to cancel.",
+        parse_mode='Markdown'
+    )
+    return BROADCAST
 
-    # DOMAIN FILTER
+async def bulk_process(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    username = update.effective_user.username or "Unknown"
+    text = update.message.text.strip()
+    emails = [e.strip().lower() for e in text.splitlines() if e.strip()]
+    
+    if not (1 <= len(emails) <= 10):
+        await update.message.reply_text(
+            "❌ **𝗜𝗡𝗩𝗔𝗟𝗜𝗗 𝗖𝗢𝗨𝗡𝗧!**\n"
+            "Send between 1–10 emails.\n\n"
+            "Use /cancel to cancel.",
+            parse_mode='Markdown'
+        )
+        return BROADCAST
+    
+    # Domain filter
     valid_emails = []
     invalid = []
     for email in emails:
@@ -302,7 +338,7 @@ async def process_email(update: Update, context: ContextTypes.DEFAULT_TYPE, is_b
             valid_emails.append(email)
         else:
             invalid.append(email)
-
+    
     if invalid:
         await update.message.reply_text(
             f"🚫 **𝗜𝗡𝗩𝗔𝗟𝗜𝗗 𝗗𝗢𝗠𝗔𝗜𝗡𝗦:**\n`{'`, `'.join(invalid)}`\n\n"
@@ -310,44 +346,35 @@ async def process_email(update: Update, context: ContextTypes.DEFAULT_TYPE, is_b
             parse_mode='Markdown'
         )
         if not valid_emails:
-            return BULK if is_bulk else SINGLE
-
-    msg = await update.message.reply_text("📤 **𝗦𝗘𝗡𝗗𝗜𝗡𝗚 𝗥𝗘𝗤𝗨𝗘𝗦𝗧...**")
-
-    if not is_bulk and len(valid_emails) == 1:
-        # SINGLE MODE
-        email = valid_emails[0]
-        success, speed = await send_reset(email)
+            return BROADCAST
+    
+    # Process bulk
+    msg = await update.message.reply_text("📤 **𝗦𝗘𝗡𝗗𝗜𝗡𝗚 𝗥𝗘𝗤𝗨𝗘𝗦𝗧𝗦...**")
+    
+    start_time = time.time()
+    results = []
+    
+    for i, email in enumerate(valid_emails):
+        success, _ = await send_reset(email)
+        results.append({"email": email, "status": success})
         add_activity(f"@{username}", email, success)
-        result = format_single_result(email, success, speed, f"@{username}")
-        await msg.edit_text(result, parse_mode='Markdown')
-    else:
-        # BULK MODE
-        start_time = time.time()
-        results = []
-        for i, email in enumerate(valid_emails):
-            success, _ = await send_reset(email)
-            results.append({"email": email, "status": success})
-            add_activity(f"@{username}", email, success)
-            await asyncio.sleep(2.5)
-            if (i + 1) % 3 == 0:
-                await msg.edit_text(f"📡 **𝗦𝗘𝗡𝗗𝗜𝗡𝗚... {i+1}/{len(valid_emails)}**")
-
-        total_time = time.time() - start_time
-        result = format_bulk_result(results, total_time)
-        await msg.edit_text(result, parse_mode='Markdown')
-
-    await update.message.reply_text("Choose mode:", reply_markup=mode_buttons())
+        await asyncio.sleep(2.5)
+        
+        if (i + 1) % 3 == 0:
+            await msg.edit_text(f"📡 **𝗦𝗘𝗡𝗗𝗜𝗡𝗚... {i+1}/{len(valid_emails)}**")
+    
+    total_time = time.time() - start_time
+    result = format_bulk_result(results, total_time)
+    await msg.edit_text(result, parse_mode='Markdown')
+    
     return ConversationHandler.END
 
 # ================== OWNER COMMANDS ==================
 
 async def owner_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """OWNER ONLY - View bot statistics"""
-    user_id = update.effective_user.id
-    
-    if not is_owner(user_id):
-        return  # Silently ignore if not owner
+    if not is_owner(update.effective_user.id):
+        return
     
     success_rate = (stats['successful_resets'] / max(stats['total_requests'], 1) * 100)
     stats_msg = (
@@ -364,10 +391,8 @@ async def owner_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def owner_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """OWNER ONLY - View user count"""
-    user_id = update.effective_user.id
-    
-    if not is_owner(user_id):
-        return  # Silently ignore if not owner
+    if not is_owner(update.effective_user.id):
+        return
     
     await update.message.reply_text(
         f"👥 **𝗨𝗦𝗘𝗥 𝗖𝗢𝗨𝗡𝗧**\n\n"
@@ -378,12 +403,9 @@ async def owner_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def owner_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """OWNER ONLY - Manage force join channels"""
-    user_id = update.effective_user.id
+    if not is_owner(update.effective_user.id):
+        return
     
-    if not is_owner(user_id):
-        return  # Silently ignore if not owner
-    
-    # Check if adding/removing channel
     if context.args:
         action = context.args[0].lower()
         
@@ -413,7 +435,6 @@ async def owner_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(f"❌ Channel not found: `{channel_username}`", parse_mode='Markdown')
             return
     
-    # List all channels
     if not FORCE_JOIN_CHANNELS:
         await update.message.reply_text("📭 No force join channels configured.")
         return
@@ -430,12 +451,9 @@ async def owner_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def owner_domains(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """OWNER ONLY - Manage allowed domains"""
-    user_id = update.effective_user.id
+    if not is_owner(update.effective_user.id):
+        return
     
-    if not is_owner(user_id):
-        return  # Silently ignore if not owner
-    
-    # Check if adding/removing domain
     if context.args:
         action = context.args[0].lower()
         
@@ -459,7 +477,6 @@ async def owner_domains(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(f"❌ Domain not found: `{domain}`", parse_mode='Markdown')
             return
     
-    # List all domains
     lines = ["🌐 **𝗔𝗟𝗟𝗢𝗪𝗘𝗗 𝗗𝗢𝗠𝗔𝗜𝗡𝗦**\n"]
     for i, domain in enumerate(ALLOWED_DOMAINS, 1):
         lines.append(f"{i}. `{domain}`")
@@ -472,10 +489,8 @@ async def owner_domains(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def owner_activity(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """OWNER ONLY - View recent activity"""
-    user_id = update.effective_user.id
-    
-    if not is_owner(user_id):
-        return  # Silently ignore if not owner
+    if not is_owner(update.effective_user.id):
+        return
     
     if not stats["recent_activity"]:
         await update.message.reply_text("📭 No recent activity.")
@@ -493,12 +508,10 @@ async def owner_activity(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await update.message.reply_text("\n".join(lines), parse_mode='Markdown')
 
-async def broadcast_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def broadcast_start_owner(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """OWNER ONLY - Start broadcast"""
-    user_id = update.effective_user.id
-    
-    if not is_owner(user_id):
-        return ConversationHandler.END  # Silently ignore if not owner
+    if not is_owner(update.effective_user.id):
+        return ConversationHandler.END
     
     await update.message.reply_text(
         "📢 **𝗕𝗥𝗢𝗔𝗗𝗖𝗔𝗦𝗧 𝗠𝗢𝗗𝗘**\n\n"
@@ -511,9 +524,7 @@ async def broadcast_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def broadcast_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """OWNER ONLY - Send broadcast to all users"""
-    user_id = update.effective_user.id
-    
-    if not is_owner(user_id):
+    if not is_owner(update.effective_user.id):
         return ConversationHandler.END
     
     message_text = update.message.text
@@ -528,7 +539,7 @@ async def broadcast_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             await context.bot.send_message(chat_id=uid, text=message_text, parse_mode='Markdown')
             success += 1
-            await asyncio.sleep(0.05)  # Avoid rate limits
+            await asyncio.sleep(0.05)
         except:
             failed += 1
     
@@ -541,20 +552,13 @@ async def broadcast_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     return ConversationHandler.END
 
-# ================== HANDLERS ==================
-async def single_email(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    return await process_email(update, context, False)
-
-async def bulk_email(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    return await process_email(update, context, True)
-
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Cancel any operation"""
     await update.message.reply_text("❌ Operation cancelled.")
     return ConversationHandler.END
 
 # ================== MAIN ==================
-async def main():
+def main():
     print("🚀 ALIEN X INSTAGRAM RESET BOT STARTING...")
     print(f"📊 Flask Dashboard: http://localhost:{FLASK_PORT}")
     print(f"👑 Owner IDs: {OWNER_IDS}")
@@ -566,19 +570,20 @@ async def main():
     
     app = Application.builder().token(BOT_TOKEN).build()
 
-    # Main conversation handler
-    conv = ConversationHandler(
-        entry_points=[
-            CommandHandler("start", start),
-            CallbackQueryHandler(button)
-        ],
+    # User commands
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("help", help_command))
+    app.add_handler(CommandHandler("reset", reset_command))
+    
+    # Bulk reset conversation handler
+    bulk_conv = ConversationHandler(
+        entry_points=[CommandHandler("bulk", bulk_start)],
         states={
-            SINGLE: [MessageHandler(filters.TEXT & ~filters.COMMAND, single_email)],
-            BULK: [MessageHandler(filters.TEXT & ~filters.COMMAND, bulk_email)],
+            BROADCAST: [MessageHandler(filters.TEXT & ~filters.COMMAND, bulk_process)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
-    app.add_handler(conv)
+    app.add_handler(bulk_conv)
     
     # Owner-only commands (hidden from regular users)
     app.add_handler(CommandHandler("stats", owner_stats))
@@ -589,7 +594,7 @@ async def main():
     
     # Broadcast conversation handler (owner only)
     broadcast_conv = ConversationHandler(
-        entry_points=[CommandHandler("broadcast", broadcast_start)],
+        entry_points=[CommandHandler("broadcast", broadcast_start_owner)],
         states={
             BROADCAST: [MessageHandler(filters.TEXT & ~filters.COMMAND, broadcast_message)],
         },
@@ -599,6 +604,11 @@ async def main():
     
     print("="*50)
     print("🎉 BOT IS NOW RUNNING!")
+    print("\n👤 USER COMMANDS:")
+    print("   /start - Welcome message")
+    print("   /help - Show commands")
+    print("   /reset <email> - Single reset")
+    print("   /bulk - Bulk reset (1-10 emails)")
     print("\n👑 OWNER COMMANDS (Hidden):")
     print("   /stats - View bot statistics")
     print("   /users - View user count")
@@ -608,14 +618,7 @@ async def main():
     print("   /broadcast - Send message to all users")
     print("="*50)
     
-    await app.run_polling()
+    app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            loop.create_task(main())
-        else:
-            loop.run_until_complete(main())
-    except Exception as e:
-        print(f"❌ Error: {e}")
+    main()
